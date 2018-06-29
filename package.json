@@ -1,0 +1,25 @@
+{
+  "name": "sounk",
+  "version": "1.0.0",
+  "description": "Specification for both pull- and push-based data pipelines",
+  "main": "index.js",
+  "types": "types.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mperktold/sounk.git"
+  },
+  "keywords": [
+    "stream",
+    "reactive",
+    "iterative"
+  ],
+  "author": "Matthias Perktold",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mperktold/sounk/issues"
+  },
+  "homepage": "https://github.com/mperktold/sounk#readme",
+  "devDependencies": {
+    "typescript": "^2.9.2"
+  }
+}
