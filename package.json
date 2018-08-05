@@ -11,7 +11,8 @@
   "keywords": [
     "stream",
     "reactive",
-    "iterative"
+    "iterative",
+    "protocol"
   ],
   "author": "Matthias Perktold",
   "license": "MIT",

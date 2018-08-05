@@ -1,58 +1,47 @@
-/** Specifies the relation between upstream messages and emitted items. */
-export const enum Kind {
+/** Identifies a protocol of how source and sink interact with each other. */
+export interface Protocol {
 
-	/** No guarantees. */
-	Unknown = 0,
+    /** The name of the protocol. */
+    name: string;
 
-	/**
-	 * The source only emits items upon messages (pulls) from the sink.
-	 * @see https://github.com/mperktold/callbag-pullable
-	 */
-	Pull = 1,
-
-	/** The source emits items to the sink without waiting for messages from the sink. */
-	Push = 2
+    /**
+     * Indicates whether items are emitted asynchronously.
+     * `true` if all items are emitted asnynchronously, `false`
+     * if all items are emitted synchronously, `undefined` if
+     * synchronizity may vary among items.
+     */
+    async?: boolean;
 }
 
-/** Specifies the operating mode, i.e. timing constraints of emitted items. */
-export const enum Mode {
+/** A synchronous protocol. */
+export interface SyncProtocol extends Protocol {
+    async: false;
+}
 
-	/** No guarantees. */
-	Unknown = 0,
-
-	/** Items are emitted immediately. */
-	Sync = 1,
-
-	/** Items are emitted asynchronously. */
-	Async = 2
+/** An asynchronous protocol. */
+export interface AsyncProtocol extends Protocol {
+    async: true;
 }
 
 /**
  * A source of items.
- * It can be consumed by connecting a {@link Sink} and opening the resulting connection.
+ * It can be consumed by connecting a {@link Sink} to it.
  *
  * @param <T> The type of items emitted by this source.
- * @param <K> The statically known kind of this source.
- * @param <M> The statically known mode of this source.
+ * @param <P> The type of the protocol of this source.
  */
-export interface Source<
-	T,
-	K extends Kind = Kind,
-	M extends Mode = Mode>
-{
-	/** The kind this source. */
-	kind: K;
+export interface Source<T, P extends Protocol = Protocol> {
 
-	/** The mode of this source. */
-	mode: M;
+    /** The protocol of this source. */
+    protocol: P;
 
-	/**
-	 * Connects a sink to this source. When the connection is established, the source
-	 * must pass it to the `onConnect` method of the connected sink. Only when the
-	 * `onConnect` call returns, the source is allowed to push items to the sink or
-	 * terminate the sink.
-	 */
-	connect(sink: Sink<T>): void;
+    /**
+     * Connects a sink to this source. When the connection is established, the source
+     * must pass it to the `onConnect` method of the connected sink. Only when the
+     * `onConnect` call returns, the source is allowed to push items to the sink or
+     * terminate the sink.
+     */
+    connect(sink: Sink<T>): void;
 }
 
 /**
@@ -62,22 +51,22 @@ export interface Source<
  */
 export interface Sink<T> {
 
-	/**
-	 * Notifies this sink of a `Connection` established with a source.
-	 * If this sink is an intermediate one, i.e. the inner sink of an operator,
-	 * it must invoke the `onConnect` method of its outer sink.
-	 */
-	onConnect(connection: Connection): void;
+    /**
+     * Notifies this sink of a `Connection` established with a source.
+     * If this sink is an intermediate one, i.e. the inner sink of an operator,
+     * it must invoke the `onConnect` method of its outer sink.
+     */
+    onConnect(connection: Connection): void;
 
-	/** Pushes an item to this sink. */
-	onNext(item: T): void;
+    /** Pushes an item to this sink. */
+    onNext(item: T): void;
 
-	/**
-	 * The connection to the source was closed.
-	 * The reason for this can be an explicit close of the connection through its
-	 * close method, or because there where no more items, or because of an error.
-	 */
-	onDisconnect(error?: any): void;
+    /**
+     * The connection to the source was closed.
+     * The reason for this can be an explicit close of the connection through its
+     * close method, or because there where no more items, or because of an error.
+     */
+    onDisconnect(error?: any): void;
 }
 
 /**
@@ -86,28 +75,12 @@ export interface Sink<T> {
  */
 export interface Connection {
 
-	/**
-	 * Passes a message up to the source. A message without a payload is
-	 * interpreted as pull, i.e. as a request to push the next item.
-	 * A push-based source must ignore a pull.
-	 * A pull-based source must follow a pull with exactly one push, or with a
-	 * close notification if there are no more items to be pulled.
-	 */
-	message(payload?: any): void;
+    /** Passes a message up to the source. */
+    message(payload?: any): void;
 
-	/**
-	 * Closes this connection.
-	 * Tells this stage to stop, either because an error occurred or because no further items are needed.
-	 */
-	disconnect(): void;
+    /** Disconnects this connection, effectively telling the source to stop emitting items to the sink. */
+    disconnect(): void;
 }
 
-/**
- * An object that is both a sink and a source.
- * It can be used as an event listening facility, where events are published through `onNext` of its
- * sink interface to reach all sinks connected to it.
- */
-export type Subject<T, M extends Mode = Mode> = Sink<T> & Source<T, Kind.Push, M>;
-
-/** An operator that transforms a source into another source, but preserves kind and mode of the original source. */
-export type PreservingOp<T, R> = <K extends Kind, M extends Mode>(arg: Source<T, K, M>) => Source<R, K, M>;
+/** An operator that transforms a source into another source of the same protocol. */
+export type ProtocolPreservingOp<T, R> = <P extends Protocol>(arg: Source<T, P>) => Source<R, P>;
