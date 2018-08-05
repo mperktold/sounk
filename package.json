@@ -2,7 +2,7 @@
   "name": "sounk",
   "version": "1.0.0",
   "description": "Specification for both pull- and push-based data pipelines",
-  "main": "index.js",
+  "main": "src/index.ts",
   "types": "types.d.ts",
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/mperktold/sounk#readme",
   "devDependencies": {
+    "tslint": "^5.10.0",
     "typescript": "^2.9.2"
   }
 }
